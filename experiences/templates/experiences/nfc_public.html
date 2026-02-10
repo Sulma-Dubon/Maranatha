@@ -1,0 +1,91 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Versiculo Diario</title>
+    <link rel="stylesheet" href="{% static 'experiences/nfc_public.css' %}" />
+  </head>
+  <body>
+    <div class="bg"></div>
+    <main class="page">
+      <header class="top">
+        <div class="brand">
+          <span class="brand-dot"></span>
+          <span class="brand-text">Joyeria NFC</span>
+        </div>
+        <div class="pill">Experiencia</div>
+      </header>
+
+      <section class="card">
+        {% if error %}
+          <h1 class="title">No disponible</h1>
+          <p class="verse">{{ error }}</p>
+        {% elif data.verse_data %}
+          <h1 class="title">Versiculo del dia</h1>
+          <p class="verse">“{{ data.verse_data.text }}”</p>
+          <div class="meta">
+            <span class="ref">
+              {{ data.verse_data.book }}
+              {{ data.verse_data.chapter }}:{{ data.verse_data.verse_start }}{% if data.verse_data.verse_end and data.verse_data.verse_end != data.verse_data.verse_start %}-{{ data.verse_data.verse_end }}{% endif %}
+            </span>
+            {% if data.verse_data.category %}
+              <span class="tag">{{ data.verse_data.category }}</span>
+            {% endif %}
+          </div>
+        {% else %}
+          <h1 class="title">Aun sin versiculo</h1>
+          <p class="verse">Este dispositivo no tiene un versiculo asignado.</p>
+        {% endif %}
+      </section>
+
+      <section class="actions">
+        <button class="btn" id="shareBtn">Compartir</button>
+        <button class="btn ghost" id="copyBtn">Copiar link</button>
+        {% if data.experience_type == "STUDY" %}
+          <a class="btn ghost" href="/nfc/{{ data.public_uid }}/study/">Modificar</a>
+        {% endif %}
+      </section>
+
+      <section class="audio">
+        <div class="audio-label">Musica</div>
+        <audio id="audioPlayer" controls preload="none">
+          <source src="" type="audio/mpeg" />
+        </audio>
+        <small class="hint">Puedes agregar musica mas adelante.</small>
+      </section>
+    </main>
+
+    <script>
+      (function () {
+        var shareBtn = document.getElementById("shareBtn");
+        var copyBtn = document.getElementById("copyBtn");
+        var link = window.location.href;
+
+        shareBtn.addEventListener("click", async function () {
+          if (navigator.share) {
+            try {
+              await navigator.share({ title: "Versiculo Diario", url: link });
+            } catch (err) {}
+          } else {
+            copyToClipboard(link);
+          }
+        });
+
+        copyBtn.addEventListener("click", function () {
+          copyToClipboard(link);
+        });
+
+        function copyToClipboard(text) {
+          navigator.clipboard.writeText(text).then(function () {
+            copyBtn.textContent = "Copiado";
+            setTimeout(function () {
+              copyBtn.textContent = "Copiar link";
+            }, 1200);
+          });
+        }
+      })();
+    </script>
+  </body>
+</html>

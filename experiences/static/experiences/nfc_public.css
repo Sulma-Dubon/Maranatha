@@ -1,0 +1,262 @@
+:root {
+  --ink: #1d1a1a;
+  --ink-soft: #3a3232;
+  --paper: #f6f2ec;
+  --accent: #b88b4a;
+  --accent-2: #7d5f32;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: "Garamond", "Georgia", serif;
+  color: var(--ink);
+  background: #e9e2d8;
+  font-size: 16px;
+}
+
+.bg {
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(900px 600px at 15% 20%, rgba(184, 139, 74, 0.35), transparent 60%),
+    radial-gradient(800px 500px at 85% 15%, rgba(125, 95, 50, 0.25), transparent 55%),
+    radial-gradient(900px 700px at 70% 80%, rgba(86, 63, 33, 0.25), transparent 60%),
+    linear-gradient(160deg, #f7f2ea 0%, #e5dccf 60%, #e1d6c8 100%);
+  filter: saturate(1.05);
+  z-index: -1;
+}
+
+.page {
+  min-height: 100vh;
+  padding: 28px 20px 48px;
+  display: grid;
+  gap: 28px;
+  max-width: 860px;
+  margin: 0 auto;
+}
+
+.top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+  font-size: 14px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+.brand-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: linear-gradient(140deg, var(--accent), var(--accent-2));
+  box-shadow: 0 0 12px rgba(184, 139, 74, 0.4);
+}
+
+.pill {
+  font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: #fff;
+  padding: 8px 12px;
+  background: #2b2521;
+  border-radius: 999px;
+}
+
+.card {
+  background: rgba(246, 242, 236, 0.78);
+  border: 1px solid rgba(43, 37, 33, 0.08);
+  border-radius: 28px;
+  padding: 32px 28px;
+  box-shadow: 0 20px 60px rgba(21, 16, 12, 0.15);
+  backdrop-filter: blur(8px);
+}
+
+.notice {
+  background: rgba(184, 139, 74, 0.18);
+  border: 1px solid rgba(184, 139, 74, 0.4);
+  color: #3a2f25;
+  padding: 10px 12px;
+  border-radius: 12px;
+  font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+  font-size: 13px;
+}
+
+.filters {
+  display: grid;
+  grid-template-columns: 1fr 140px;
+  gap: 12px;
+}
+
+.input {
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(43, 37, 33, 0.2);
+  background: #fff;
+  font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+  font-size: 14px;
+}
+
+.form-card {
+  display: grid;
+  gap: 16px;
+}
+
+.subtitle {
+  margin: 0;
+  font-size: 20px;
+  color: var(--ink);
+}
+
+.form {
+  display: grid;
+  gap: 12px;
+}
+
+.label {
+  font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.select {
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(43, 37, 33, 0.2);
+  background: #fff;
+  font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+  font-size: 14px;
+}
+
+.title {
+  margin: 0 0 16px;
+  font-size: 28px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.verse {
+  margin: 0 0 20px;
+  font-size: 22px;
+  line-height: 1.5;
+  color: var(--ink-soft);
+}
+
+.meta {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.ref {
+  font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+  font-size: 14px;
+  letter-spacing: 0.05em;
+  color: var(--ink);
+}
+
+.tag {
+  font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(43, 37, 33, 0.25);
+  color: #3a2f25;
+}
+
+.actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.btn {
+  font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+  font-size: 14px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 12px 18px;
+  border-radius: 14px;
+  border: none;
+  cursor: pointer;
+  background: linear-gradient(140deg, var(--accent), var(--accent-2));
+  color: #fff;
+  box-shadow: 0 12px 24px rgba(184, 139, 74, 0.35);
+}
+
+.btn.ghost {
+  background: rgba(43, 37, 33, 0.08);
+  color: var(--ink);
+  box-shadow: none;
+  border: 1px solid rgba(43, 37, 33, 0.2);
+}
+
+.audio {
+  background: rgba(246, 242, 236, 0.6);
+  border-radius: 20px;
+  padding: 18px 20px;
+  border: 1px solid rgba(43, 37, 33, 0.08);
+}
+
+.audio-label {
+  font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  margin-bottom: 8px;
+}
+
+.hint {
+  display: block;
+  margin-top: 8px;
+  color: rgba(29, 26, 26, 0.6);
+}
+
+audio {
+  width: 100%;
+}
+
+@media (max-width: 600px) {
+  .card {
+    padding: 24px 20px;
+  }
+
+  .title {
+    font-size: 24px;
+  }
+
+  .verse {
+    font-size: 19px;
+  }
+
+  .filters {
+    grid-template-columns: 1fr;
+  }
+
+  .btn {
+    width: 100%;
+    padding: 14px 18px;
+  }
+
+  .select,
+  .input {
+    font-size: 16px;
+  }
+}

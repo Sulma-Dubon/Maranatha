@@ -1,0 +1,100 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Modo Estudio</title>
+    <link rel="stylesheet" href="{% static 'experiences/nfc_public.css' %}" />
+  </head>
+  <body>
+    <div class="bg"></div>
+    <main class="page">
+      <header class="top">
+        <div class="brand">
+          <span class="brand-dot"></span>
+          <span class="brand-text">Joyeria NFC</span>
+        </div>
+        <div class="pill">Study</div>
+      </header>
+
+      <section class="card">
+        {% if error %}
+          <h1 class="title">No disponible</h1>
+          <p class="verse">{{ error }}</p>
+        {% elif data.verse_data %}
+          <h1 class="title">Versiculo seleccionado</h1>
+          <p class="verse">“{{ data.verse_data.text }}”</p>
+          <div class="meta">
+            <span class="ref">
+              {{ data.verse_data.book }}
+              {{ data.verse_data.chapter }}:{{ data.verse_data.verse_start }}{% if data.verse_data.verse_end and data.verse_data.verse_end != data.verse_data.verse_start %}-{{ data.verse_data.verse_end }}{% endif %}
+            </span>
+          </div>
+        {% else %}
+          <h1 class="title">Elige tu versiculo</h1>
+          <p class="verse">Selecciona un versiculo de la lista general.</p>
+        {% endif %}
+      </section>
+
+      {% if not error %}
+        <section class="card form-card">
+          <h2 class="subtitle">Seleccion personalizada</h2>
+          {% if saved %}
+            <div class="notice">Versiculo guardado.</div>
+          {% endif %}
+          <form method="post" class="form">
+            {% csrf_token %}
+            <div class="filters">
+              <div>
+                <label class="label" for="bookFilter">Libro</label>
+                <input id="bookFilter" class="input" type="text" placeholder="Filtrar por libro" />
+              </div>
+              <div>
+                <label class="label" for="chapterFilter">Capitulo</label>
+                <input id="chapterFilter" class="input" type="number" min="1" placeholder="Ej: 3" />
+              </div>
+            </div>
+            <label class="label" for="verse_id">Versiculo</label>
+            <select id="verse_id" name="verse_id" class="select">
+              {% for verse in verses %}
+                <option value="{{ verse.id }}" data-book="{{ verse.book.name|lower }}" data-chapter="{{ verse.chapter }}" {% if verse.id == selected_id %}selected{% endif %}>
+                  {{ verse.book.name }} {{ verse.chapter }}:{{ verse.verse_start }} - {{ verse.text|truncatechars:60 }}
+                </option>
+              {% endfor %}
+            </select>
+            <button class="btn" type="submit">Guardar</button>
+          </form>
+        </section>
+      {% endif %}
+    </main>
+
+    <script>
+      (function () {
+        var bookFilter = document.getElementById("bookFilter");
+        var chapterFilter = document.getElementById("chapterFilter");
+        var select = document.getElementById("verse_id");
+
+        function applyFilters() {
+          if (!select) return;
+          var book = (bookFilter.value || "").toLowerCase();
+          var chapter = (chapterFilter.value || "").trim();
+          var opts = select.options;
+          for (var i = 0; i < opts.length; i++) {
+            var opt = opts[i];
+            var matchBook = !book || opt.dataset.book.indexOf(book) !== -1;
+            var matchChapter = !chapter || opt.dataset.chapter === chapter;
+            opt.hidden = !(matchBook && matchChapter);
+          }
+        }
+
+        if (bookFilter) {
+          bookFilter.addEventListener("input", applyFilters);
+        }
+        if (chapterFilter) {
+          chapterFilter.addEventListener("input", applyFilters);
+        }
+      })();
+    </script>
+  </body>
+</html>

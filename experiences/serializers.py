@@ -7,6 +7,7 @@ class VerseSerializer(serializers.ModelSerializer):
         fields = [
             'book',
             'chapter',
-            'verse_number',
+            'verse_start',
+            'verse_end',
             'text'
         ]

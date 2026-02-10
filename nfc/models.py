@@ -1,4 +1,6 @@
 from django.db import models
+from content.models import Verse
+import random
 
 EXPERIENCE_CHOICES = [
     ('DAILY', 'Versículo diario'),
@@ -13,8 +15,32 @@ class NFCDevice(models.Model):
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
-    def __str__(self):
-        return f"{self.public_uid} ({self.experience_type})"
+    # Devuelve un versículo estático
+    def get_static_verse_data(self):
+        verse = Verse.objects.filter(version__abbreviation='RVR1960').first()
+        if verse:
+            return {
+                "book": verse.book.name,
+                "chapter": verse.chapter,
+                "verse_start": verse.verse_start,  # CORRECTO
+                "verse_end": verse.verse_end,      # CORRECTO
+                "text": verse.text,
+            }
+        return None
+
+    # Devuelve un versículo diario (aleatorio por ahora)
+    def get_daily_verse_data(self):
+        verse = Verse.objects.filter(version__abbreviation='RVR1960').order_by('?').first()
+        if verse:
+            return {
+                "book": verse.book.name,
+                "chapter": verse.chapter,
+                "verse_start": verse.verse_start,
+                "verse_end": verse.verse_end,
+                "text": verse.text,
+            }
+        return None
+
 
 class NFCScan(models.Model):
     nfc_device = models.ForeignKey(NFCDevice, on_delete=models.CASCADE)

@@ -1,6 +1,7 @@
 from django.urls import path
-from .views import nfc_experience_view
+from .views import ExperienceView
 
 urlpatterns = [
-    path('nfc/<str:public_uid>/', nfc_experience_view),
+    path('nfc/<str:public_uid>/', ExperienceView.as_view()),
 ]
+

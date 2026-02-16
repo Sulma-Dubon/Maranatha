@@ -138,3 +138,6 @@ CACHES = {
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 AUTH_USER_MODEL = 'accounts.User'
+
+# Feature flag: enable/disable per-scan event logging.
+ENABLE_NFC_SCAN_LOGS = os.getenv('ENABLE_NFC_SCAN_LOGS', 'True').lower() in ('1', 'true', 'yes', 'on')

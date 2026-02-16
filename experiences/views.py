@@ -1,10 +1,10 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
+from django.conf import settings
 from django.shortcuts import render, redirect
-from nfc.models import NFCDevice
-from content.models import Verse
-from content.models import VerseCategory
+from nfc.models import NFCDevice, NFCScan
+from content.models import Verse, VerseCategory, BibleVersion
 from .models import ExperienceConfig, StudyVerseAssignment
 from .serializers import VerseSerializer
 
@@ -56,6 +56,32 @@ class VerseListView(APIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
+class VersionsView(APIView):
+    def get(self, request):
+        qs = BibleVersion.objects.filter(is_active=True).order_by('abbreviation')
+        data = [
+            {"id": v.id, "name": v.name, "abbreviation": v.abbreviation}
+            for v in qs
+        ]
+        return Response(data, status=status.HTTP_200_OK)
+
+
+class CategoriesView(APIView):
+    def get(self, request):
+        qs = VerseCategory.objects.filter(is_active=True).order_by('name')
+        data = [
+            {"id": c.id, "name": c.name, "slug": c.slug, "description": c.description}
+            for c in qs
+        ]
+        return Response(data, status=status.HTTP_200_OK)
+
+
+class ExperienceTypesView(APIView):
+    def get(self, request):
+        data = [{"value": key, "label": label} for key, label in NFCDevice.EXPERIENCE_CHOICES]
+        return Response(data, status=status.HTTP_200_OK)
+
+
 class StudyVerseAddView(APIView):
     def post(self, request, public_uid):
         try:
@@ -96,7 +122,12 @@ class StudyVerseAddView(APIView):
 
 def experience_page(request, public_uid):
     data, error = _get_experience_payload(public_uid)
+    theme = (request.GET.get("theme") or "a").lower()
+    if theme not in {"a", "b"}:
+        theme = "a"
     context = {"data": data, "error": None}
+    context["theme"] = theme
+    context["theme_class"] = f"theme-{theme}"
     if error:
         context["error"] = error[0]
     return render(request, "experiences/nfc_public.html", context)
@@ -159,6 +190,9 @@ def _get_experience_payload(public_uid):
         nfc_device = NFCDevice.objects.get(public_uid=public_uid, is_active=True)
     except NFCDevice.DoesNotExist:
         return None, ("NFC no encontrado", status.HTTP_404_NOT_FOUND)
+
+    if settings.ENABLE_NFC_SCAN_LOGS:
+        NFCScan.objects.create(nfc_device=nfc_device)
 
     config = (
         ExperienceConfig.objects.filter(nfc_device=nfc_device)

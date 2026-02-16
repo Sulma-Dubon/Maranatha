@@ -1,10 +1,11 @@
 
+from django.conf import settings
 from rest_framework.generics import RetrieveAPIView
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from django.db import transaction
-from .models import NFCDevice
+from .models import NFCDevice, NFCScan
 from .serializers import PublicNFCSerializer
 from experiences.models import ExperienceConfig
 from content.models import BibleVersion, VerseCategory, Verse
@@ -19,6 +20,10 @@ class PublicNFCView(RetrieveAPIView):
             nfc_device = self.get_object()
         except NFCDevice.DoesNotExist:
             return Response({"detail": "NFC no encontrado"}, status=status.HTTP_404_NOT_FOUND)
+
+        if settings.ENABLE_NFC_SCAN_LOGS:
+            NFCScan.objects.create(nfc_device=nfc_device)
+
         serializer = self.get_serializer(nfc_device)
         return Response(serializer.data)
 

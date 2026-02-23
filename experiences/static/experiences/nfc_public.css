@@ -129,6 +129,79 @@ body {
   padding-top: 2px;
 }
 
+.feed-shell {
+  display: grid;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.feed-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.feed-title {
+  margin: 0;
+  font-family: var(--font-ui);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 14px;
+  color: #3a3029;
+}
+
+.feed-subtitle {
+  color: #5f5147;
+  font-size: 11px;
+}
+
+.feed-list {
+  display: grid;
+  gap: 8px;
+}
+
+.feed-card {
+  border: 1px solid rgba(74, 63, 54, 0.16);
+  background: rgba(248, 239, 229, 0.86);
+  border-radius: 10px;
+  padding: 10px;
+}
+
+.feed-card-title {
+  margin: 0 0 6px;
+  font-family: var(--font-ui);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: #3a3029;
+}
+
+.feed-card-body {
+  margin: 0;
+  font-family: var(--font-verse);
+  font-size: 18px;
+  line-height: 1.3;
+  color: #322925;
+}
+
+.feed-ref {
+  margin: 8px 0 0;
+  font-family: var(--font-ui);
+  font-size: 11px;
+  color: #5d4f45;
+}
+
+.feed-empty {
+  margin: 0;
+  border: 1px dashed rgba(74, 63, 54, 0.2);
+  border-radius: 10px;
+  padding: 10px;
+  font-size: 13px;
+  color: #5f5147;
+  background: rgba(248, 239, 229, 0.58);
+}
+
 .btn {
   border: 1px solid rgba(248, 239, 229, 0.35);
   background: rgba(248, 239, 229, 0.96);
@@ -271,6 +344,10 @@ body {
 
   .filters {
     grid-template-columns: 1fr;
+  }
+
+  .feed-subtitle {
+    display: none;
   }
 }
 

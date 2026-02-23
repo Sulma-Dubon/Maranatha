@@ -47,13 +47,27 @@
           <a class="btn ghost" href="/nfc/{{ data.public_uid }}/study/">Modificar</a>
         {% endif %}
       </section>
+
+      <section class="feed-shell" id="feedShell" data-public-uid="{{ data.public_uid|default:'' }}">
+        <div class="feed-head">
+          <h2 class="feed-title">Feed</h2>
+          <small class="feed-subtitle">Reflexiones y contenido relacionado</small>
+        </div>
+        <div class="feed-list" id="feedList">
+          <p class="feed-empty">Desliza para cargar el feed...</p>
+        </div>
+      </section>
     </main>
 
     <script>
       (function () {
         var shareBtn = document.getElementById("shareBtn");
         var copyBtn = document.getElementById("copyBtn");
+        var feedShell = document.getElementById("feedShell");
+        var feedList = document.getElementById("feedList");
+        var publicUid = feedShell ? feedShell.dataset.publicUid : "";
         var link = window.location.href;
+        var feedLoaded = false;
 
         shareBtn.addEventListener("click", async function () {
           if (navigator.share) {
@@ -77,6 +91,52 @@
             }, 1200);
           });
         }
+
+        function renderFeed(items) {
+          if (!feedList) return;
+          if (!items.length) {
+            feedList.innerHTML = '<p class="feed-empty">Aun no hay publicaciones.</p>';
+            return;
+          }
+          var html = items
+            .map(function (item) {
+              var ref = item.verse_ref ? '<p class="feed-ref">' + item.verse_ref + '</p>' : "";
+              return (
+                '<article class="feed-card">' +
+                '<h3 class="feed-card-title">' + (item.title || "Publicacion") + '</h3>' +
+                '<p class="feed-card-body">' + item.body + '</p>' +
+                ref +
+                "</article>"
+              );
+            })
+            .join("");
+          feedList.innerHTML = html;
+        }
+
+        async function loadFeed() {
+          if (feedLoaded || !publicUid) return;
+          feedLoaded = true;
+          try {
+            var response = await fetch("/api/feed/?public_uid=" + encodeURIComponent(publicUid) + "&limit=10");
+            if (!response.ok) throw new Error("feed error");
+            var data = await response.json();
+            renderFeed(data);
+          } catch (err) {
+            feedList.innerHTML = '<p class="feed-empty">No se pudo cargar el feed.</p>';
+          }
+        }
+
+        window.addEventListener(
+          "scroll",
+          function () {
+            if (!feedShell) return;
+            var rect = feedShell.getBoundingClientRect();
+            if (rect.top < window.innerHeight + 120) {
+              loadFeed();
+            }
+          },
+          { passive: true }
+        );
       })();
     </script>
   </body>

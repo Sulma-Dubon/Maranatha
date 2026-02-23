@@ -37,6 +37,7 @@ INSTALLED_APPS = [
     'content',
     'nfc',
     'experiences',
+    'social',
 ]
 
 MIDDLEWARE = [

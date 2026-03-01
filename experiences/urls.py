@@ -12,6 +12,7 @@ from .views import (
 urlpatterns = [
     path('nfc/<str:public_uid>/', ExperienceView.as_view()),
     path('today/<slug:category_slug>/', CategoryTodayView.as_view()),
+    path('today/<slug:category_slug>/<str:version_abbr>/', CategoryTodayView.as_view()),
     path('verses/', VerseListView.as_view()),
     path('nfc/<str:public_uid>/study/add/', StudyVerseAddView.as_view()),
     path('versions/', VersionsView.as_view()),

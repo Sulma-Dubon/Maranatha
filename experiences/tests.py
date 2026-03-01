@@ -23,7 +23,7 @@ class CategoryTodayFlowTests(TestCase):
         verse.categories.add(self.category)
 
     def test_today_category_endpoint_returns_verse(self):
-        response = self.client.get(f"/api/today/{self.category.slug}/")
+        response = self.client.get(f"/api/today/{self.category.slug}/{self.version.abbreviation}/")
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["experience_type"], "CATEGORY_PUBLIC")
         self.assertEqual(response.json()["verse_data"]["category"], self.category.name)

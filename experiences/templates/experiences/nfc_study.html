@@ -33,7 +33,7 @@
           </div>
         {% else %}
           <h1 class="title">Elige tu versiculo</h1>
-          <p class="verse">Selecciona un versiculo de la lista general.</p>
+          <p class="verse">Selecciona version, categoria y versiculo.</p>
         {% endif %}
       </section>
 
@@ -45,6 +45,30 @@
           {% endif %}
           <form method="post" class="form">
             {% csrf_token %}
+            <div class="filters">
+              <div>
+                <label class="label" for="version">Version</label>
+                <select id="version" name="version" class="select" onchange="this.form.submit()">
+                  <option value="">Selecciona version</option>
+                  {% for version in versions %}
+                    <option value="{{ version.abbreviation }}" {% if version.abbreviation == selected_version %}selected{% endif %}>
+                      {{ version.abbreviation }}
+                    </option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div>
+                <label class="label" for="category">Categoria</label>
+                <select id="category" name="category" class="select" onchange="this.form.submit()">
+                  <option value="">Selecciona categoria</option>
+                  {% for category in categories %}
+                    <option value="{{ category.slug }}" {% if category.slug == selected_category %}selected{% endif %}>
+                      {{ category.name }}
+                    </option>
+                  {% endfor %}
+                </select>
+              </div>
+            </div>
             <div class="filters">
               <div>
                 <label class="label" for="bookFilter">Libro</label>
@@ -63,7 +87,7 @@
                 </option>
               {% endfor %}
             </select>
-            <button class="btn" type="submit">Guardar</button>
+            <button class="btn" type="submit" {% if not verses %}disabled{% endif %}>Guardar</button>
           </form>
         </section>
       {% endif %}

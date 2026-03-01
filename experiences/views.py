@@ -28,8 +28,9 @@ class ExperienceView(APIView):
 
 
 class CategoryTodayView(APIView):
-    def get(self, request, category_slug):
-        version_abbr = request.query_params.get("version")
+    def get(self, request, category_slug, version_abbr=None):
+        if not version_abbr:
+            version_abbr = request.query_params.get("version")
         data, error = _get_today_category_payload(category_slug, version_abbr=version_abbr)
         if error:
             return Response({"detail": error[0]}, status=error[1])
@@ -108,24 +109,39 @@ class StudyVerseAddView(APIView):
             return Response({"detail": "Config no encontrada para este NFC"}, status=status.HTTP_404_NOT_FOUND)
 
         verse_id = request.data.get('verse_id')
+        version_abbr = request.data.get('version')
+        category_slug = request.data.get('category')
         if not verse_id:
             return Response({"detail": "verse_id es requerido"}, status=status.HTTP_400_BAD_REQUEST)
+        if not version_abbr:
+            return Response({"detail": "version es requerido"}, status=status.HTTP_400_BAD_REQUEST)
+        if not category_slug:
+            return Response({"detail": "category es requerido"}, status=status.HTTP_400_BAD_REQUEST)
+
+        version = BibleVersion.objects.filter(abbreviation=version_abbr, is_active=True).first()
+        if not version:
+            return Response({"detail": "Version no encontrada"}, status=status.HTTP_404_NOT_FOUND)
+        category = VerseCategory.objects.filter(slug=category_slug, is_active=True).first()
+        if not category:
+            return Response({"detail": "Categoria no encontrada"}, status=status.HTTP_404_NOT_FOUND)
 
         verse = Verse.objects.filter(id=verse_id).select_related('book', 'version').first()
         if not verse:
             return Response({"detail": "Versiculo no encontrado"}, status=status.HTTP_404_NOT_FOUND)
-
-        try:
-            general_category = VerseCategory.objects.get(slug='general')
-        except VerseCategory.DoesNotExist:
-            return Response({"detail": "Categoria general no existe"}, status=status.HTTP_400_BAD_REQUEST)
-
-        if not verse.categories.filter(id=general_category.id).exists():
+        if verse.version_id != version.id:
             return Response(
-                {"detail": "El versiculo no pertenece a la categoria general"},
+                {"detail": "El versiculo no pertenece a la version seleccionada"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        if not verse.categories.filter(id=category.id).exists():
+            return Response(
+                {"detail": "El versiculo no pertenece a la categoria seleccionada"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
+        config.version = version
+        config.category = category
+        config.save(update_fields=["version", "category"])
         StudyVerseAssignment.objects.get_or_create(config=config, verse=verse)
         verse_data = nfc_device._build_verse_data(verse)
         return Response({"detail": "Asignado", "verse_data": verse_data}, status=status.HTTP_201_CREATED)
@@ -145,8 +161,9 @@ def experience_page(request, public_uid):
     return render(request, "experiences/nfc_public.html", context)
 
 
-def today_category_page(request, category_slug):
-    version_abbr = request.GET.get("version")
+def today_category_page(request, category_slug, version_abbr=None):
+    if not version_abbr:
+        version_abbr = request.GET.get("version")
     data, error = _get_today_category_payload(category_slug, version_abbr=version_abbr)
     theme = (request.GET.get("theme") or "a").lower()
     if theme not in {"a", "b"}:
@@ -155,6 +172,8 @@ def today_category_page(request, category_slug):
     context["theme"] = theme
     context["theme_class"] = f"theme-{theme}"
     context["base_path"] = f"/hoy/{category_slug}/"
+    if version_abbr:
+        context["base_path"] = f"/hoy/{category_slug}/{version_abbr}/"
     if error:
         context["error"] = error[0]
     return render(request, "experiences/nfc_public.html", context)
@@ -178,13 +197,18 @@ def study_page(request, public_uid):
         .select_related('category', 'version')
         .first()
     )
-    version_abbr = config.version.abbreviation if config and config.version else None
-    general_category = VerseCategory.objects.filter(slug='general').first()
+    active_versions = BibleVersion.objects.filter(is_active=True).order_by("abbreviation")
+    active_categories = VerseCategory.objects.filter(is_active=True).order_by("name")
+    selected_version = request.GET.get("version") or (config.version.abbreviation if config and config.version else None)
+    selected_category = request.GET.get("category") or (config.category.slug if config and config.category else None)
+    if request.method == "POST":
+        selected_version = request.POST.get("version") or selected_version
+        selected_category = request.POST.get("category") or selected_category
 
     verses = Verse.objects.none()
-    if version_abbr and general_category:
+    if selected_version and selected_category:
         verses = (
-            Verse.objects.filter(categories=general_category, version__abbreviation=version_abbr)
+            Verse.objects.filter(categories__slug=selected_category, version__abbreviation=selected_version)
             .select_related('book', 'version')
             .order_by('book__name', 'chapter', 'verse_start')
         )
@@ -195,7 +219,18 @@ def study_page(request, public_uid):
         verse_id = request.POST.get("verse_id")
         if verse_id:
             verse = Verse.objects.filter(id=verse_id).first()
-            if verse and general_category and verse.categories.filter(id=general_category.id).exists():
+            version = BibleVersion.objects.filter(abbreviation=selected_version, is_active=True).first()
+            category = VerseCategory.objects.filter(slug=selected_category, is_active=True).first()
+            if (
+                verse
+                and version
+                and category
+                and verse.version_id == version.id
+                and verse.categories.filter(id=category.id).exists()
+            ):
+                config.version = version
+                config.category = category
+                config.save(update_fields=["version", "category"])
                 StudyVerseAssignment.objects.get_or_create(config=config, verse=verse)
                 data["verse_data"] = nfc_device._build_verse_data(verse)
                 selected_id = verse.id
@@ -206,6 +241,10 @@ def study_page(request, public_uid):
         "data": data,
         "error": None,
         "verses": verses,
+        "versions": active_versions,
+        "categories": active_categories,
+        "selected_version": selected_version,
+        "selected_category": selected_category,
         "selected_id": selected_id,
         "saved": saved,
     }
@@ -218,10 +257,7 @@ def _get_today_category_payload(category_slug, version_abbr=None):
         return None, ("Categoria no encontrada", status.HTTP_404_NOT_FOUND)
 
     if not version_abbr:
-        default_version = BibleVersion.objects.filter(abbreviation="RVR1909", is_active=True).first()
-        if not default_version:
-            default_version = BibleVersion.objects.filter(is_active=True).first()
-        version_abbr = default_version.abbreviation if default_version else None
+        return None, ("Debes indicar version", status.HTTP_400_BAD_REQUEST)
     version = BibleVersion.objects.filter(abbreviation=version_abbr, is_active=True).first()
     if not version:
         return None, ("Version no encontrada", status.HTTP_404_NOT_FOUND)

@@ -5,6 +5,7 @@ from django.core.cache import cache
 from django.test import TestCase, override_settings
 
 from content.models import BibleVersion, Book, Verse, VerseCategory
+from experiences.models import ExperienceConfig
 from nfc.models import NFCDevice, NFCScan
 
 
@@ -102,7 +103,14 @@ class CategoryDailyCacheTests(TestCase):
 
 class ScanLoggingFlagTests(TestCase):
     def setUp(self):
-        self.nfc = NFCDevice.objects.create(public_uid="TEST-SCAN-FLAG", experience_type="DAILY")
+        version = BibleVersion.objects.create(name="Reina Valera 1909", abbreviation="RVR1909")
+        category = VerseCategory.objects.create(name="General", slug="general")
+        self.nfc = NFCDevice.objects.create(public_uid="TEST-SCAN-FLAG", experience_type="STUDY")
+        ExperienceConfig.objects.create(
+            nfc_device=self.nfc,
+            category=category,
+            version=version,
+        )
 
     @override_settings(ENABLE_NFC_SCAN_LOGS=True)
     def test_public_nfc_endpoint_logs_scan_when_enabled(self):

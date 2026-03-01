@@ -41,8 +41,8 @@
       <section class="actions">
         <button class="btn" id="shareBtn">Compartir</button>
         <button class="btn ghost" id="copyBtn">Copiar link</button>
-        <a class="btn ghost" href="/nfc/{{ data.public_uid }}/?theme=a">Tema A</a>
-        <a class="btn ghost" href="/nfc/{{ data.public_uid }}/?theme=b">Tema B</a>
+        <a class="btn ghost" href="{{ base_path }}?theme=a">Tema A</a>
+        <a class="btn ghost" href="{{ base_path }}?theme=b">Tema B</a>
         {% if data.experience_type == "STUDY" %}
           <a class="btn ghost" href="/nfc/{{ data.public_uid }}/study/">Modificar</a>
         {% endif %}

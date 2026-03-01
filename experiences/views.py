@@ -3,6 +3,8 @@ from rest_framework.response import Response
 from rest_framework import status
 from django.conf import settings
 from django.shortcuts import render, redirect
+from django.core.cache import cache
+from django.utils import timezone
 from nfc.models import NFCDevice, NFCScan
 from content.models import Verse, VerseCategory, BibleVersion
 from .models import ExperienceConfig, StudyVerseAssignment
@@ -19,7 +21,16 @@ class ExperienceView(APIView):
     """
 
     def get(self, request, public_uid):
-        data, error = _get_experience_payload(public_uid)
+        data, error = _get_experience_payload(public_uid, study_only=True)
+        if error:
+            return Response({"detail": error[0]}, status=error[1])
+        return Response(data, status=status.HTTP_200_OK)
+
+
+class CategoryTodayView(APIView):
+    def get(self, request, category_slug):
+        version_abbr = request.query_params.get("version")
+        data, error = _get_today_category_payload(category_slug, version_abbr=version_abbr)
         if error:
             return Response({"detail": error[0]}, status=error[1])
         return Response(data, status=status.HTTP_200_OK)
@@ -121,20 +132,36 @@ class StudyVerseAddView(APIView):
 
 
 def experience_page(request, public_uid):
-    data, error = _get_experience_payload(public_uid)
+    data, error = _get_experience_payload(public_uid, study_only=True)
     theme = (request.GET.get("theme") or "a").lower()
     if theme not in {"a", "b"}:
         theme = "a"
     context = {"data": data, "error": None}
     context["theme"] = theme
     context["theme_class"] = f"theme-{theme}"
+    context["base_path"] = f"/nfc/{public_uid}/"
+    if error:
+        context["error"] = error[0]
+    return render(request, "experiences/nfc_public.html", context)
+
+
+def today_category_page(request, category_slug):
+    version_abbr = request.GET.get("version")
+    data, error = _get_today_category_payload(category_slug, version_abbr=version_abbr)
+    theme = (request.GET.get("theme") or "a").lower()
+    if theme not in {"a", "b"}:
+        theme = "a"
+    context = {"data": data, "error": None}
+    context["theme"] = theme
+    context["theme_class"] = f"theme-{theme}"
+    context["base_path"] = f"/hoy/{category_slug}/"
     if error:
         context["error"] = error[0]
     return render(request, "experiences/nfc_public.html", context)
 
 
 def study_page(request, public_uid):
-    data, error = _get_experience_payload(public_uid)
+    data, error = _get_experience_payload(public_uid, study_only=True)
     if error:
         return render(request, "experiences/nfc_study.html", {"error": error[0], "data": None})
 
@@ -185,11 +212,60 @@ def study_page(request, public_uid):
     return render(request, "experiences/nfc_study.html", context)
 
 
-def _get_experience_payload(public_uid):
+def _get_today_category_payload(category_slug, version_abbr=None):
+    category = VerseCategory.objects.filter(slug=category_slug, is_active=True).first()
+    if not category:
+        return None, ("Categoria no encontrada", status.HTTP_404_NOT_FOUND)
+
+    if not version_abbr:
+        default_version = BibleVersion.objects.filter(abbreviation="RVR1909", is_active=True).first()
+        if not default_version:
+            default_version = BibleVersion.objects.filter(is_active=True).first()
+        version_abbr = default_version.abbreviation if default_version else None
+    version = BibleVersion.objects.filter(abbreviation=version_abbr, is_active=True).first()
+    if not version:
+        return None, ("Version no encontrada", status.HTTP_404_NOT_FOUND)
+
+    day_key = timezone.localdate().isoformat()
+    cache_key = f"daily_verse:{category.id}:{version.abbreviation}:{day_key}"
+    verse_id = cache.get(cache_key)
+    if verse_id is None:
+        verse = (
+            Verse.objects.filter(version=version, categories=category)
+            .order_by("?")
+            .first()
+        )
+        verse_id = verse.id if verse else None
+        cache.set(cache_key, verse_id, timeout=60 * 60 * 24)
+    verse = Verse.objects.filter(id=verse_id).select_related("book").first() if verse_id else None
+    if not verse:
+        return None, ("No hay versiculos para esta categoria/version", status.HTTP_404_NOT_FOUND)
+
+    data = {
+        "public_uid": None,
+        "experience_type": "CATEGORY_PUBLIC",
+        "verse_data": {
+            "book": verse.book.name,
+            "chapter": verse.chapter,
+            "verse_start": verse.verse_start,
+            "verse_end": verse.verse_end,
+            "text": verse.text,
+            "category": category.name,
+        },
+        "category_slug": category.slug,
+        "version": version.abbreviation,
+    }
+    return data, None
+
+
+def _get_experience_payload(public_uid, study_only=False):
     try:
         nfc_device = NFCDevice.objects.get(public_uid=public_uid, is_active=True)
     except NFCDevice.DoesNotExist:
         return None, ("NFC no encontrado", status.HTTP_404_NOT_FOUND)
+
+    if study_only and nfc_device.experience_type != "STUDY":
+        return None, ("Este NFC ahora solo funciona para modo STUDY", status.HTTP_400_BAD_REQUEST)
 
     if settings.ENABLE_NFC_SCAN_LOGS:
         NFCScan.objects.create(nfc_device=nfc_device)

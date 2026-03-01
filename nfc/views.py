@@ -7,7 +7,7 @@ from rest_framework import status
 from django.db import transaction
 from .models import NFCDevice, NFCScan
 from .serializers import PublicNFCSerializer
-from experiences.models import ExperienceConfig
+from experiences.models import ExperienceConfig, StudyVerseAssignment
 from content.models import BibleVersion, VerseCategory, Verse
 
 class PublicNFCView(RetrieveAPIView):
@@ -21,11 +21,37 @@ class PublicNFCView(RetrieveAPIView):
         except NFCDevice.DoesNotExist:
             return Response({"detail": "NFC no encontrado"}, status=status.HTTP_404_NOT_FOUND)
 
+        if nfc_device.experience_type != 'STUDY':
+            return Response(
+                {"detail": "Este NFC ahora solo funciona para modo STUDY"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
         if settings.ENABLE_NFC_SCAN_LOGS:
             NFCScan.objects.create(nfc_device=nfc_device)
 
-        serializer = self.get_serializer(nfc_device)
-        return Response(serializer.data)
+        config = (
+            ExperienceConfig.objects.filter(nfc_device=nfc_device)
+            .select_related('version')
+            .first()
+        )
+        if not config or not config.version:
+            return Response({"detail": "Config sin version seleccionada"}, status=status.HTTP_400_BAD_REQUEST)
+
+        assignment = (
+            StudyVerseAssignment.objects.filter(config=config)
+            .select_related('verse', 'verse__book')
+            .order_by('-updated_at')
+            .first()
+        )
+        verse_data = nfc_device._build_verse_data(assignment.verse) if assignment else None
+        return Response(
+            {
+                "public_uid": nfc_device.public_uid,
+                "experience_type": nfc_device.experience_type,
+                "verse_data": verse_data,
+            }
+        )
 
 
 class NFCConfigureView(APIView):

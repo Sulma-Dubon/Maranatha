@@ -7,7 +7,7 @@
     <title>Versiculo Diario</title>
     <link rel="stylesheet" href="{% static 'experiences/nfc_public.css' %}" />
   </head>
-  <body class="public-page {{ theme_class }}">
+  <body class="public-page {{ theme_class }}"{% if background_image_url %} style="--theme-a-bg: url('{{ background_image_url }}'); --theme-b-bg: url('{{ background_image_url }}');"{% endif %}>
     <div class="bg"></div>
     <main class="page">
       <section class="hero-stage">
@@ -19,15 +19,17 @@
                 <p class="verse">{{ error }}</p>
               {% elif data.verse_data %}
                 <h1 class="title">Versiculo del dia</h1>
-                <p class="verse">&ldquo;{{ data.verse_data.text }}&rdquo;</p>
-                <div class="meta">
-                  <span class="ref">
-                    {{ data.verse_data.book }}
-                    {{ data.verse_data.chapter }}:{{ data.verse_data.verse_start }}{% if data.verse_data.verse_end and data.verse_data.verse_end != data.verse_data.verse_start %}-{{ data.verse_data.verse_end }}{% endif %}
-                  </span>
-                  {% if data.verse_data.category %}
-                    <span class="tag">{{ data.verse_data.category }}</span>
-                  {% endif %}
+                <div class="verse-copy">
+                  <p class="verse">&ldquo;{{ data.verse_data.text }}&rdquo;</p>
+                  <div class="meta">
+                    <span class="ref">
+                      {{ data.verse_data.book }}
+                      {{ data.verse_data.chapter }}:{{ data.verse_data.verse_start }}{% if data.verse_data.verse_end and data.verse_data.verse_end != data.verse_data.verse_start %}-{{ data.verse_data.verse_end }}{% endif %}
+                    </span>
+                    {% if data.verse_data.category %}
+                      <span class="tag">{{ data.verse_data.category }}</span>
+                    {% endif %}
+                  </div>
                 </div>
               {% else %}
                 <h1 class="title">Aun sin versiculo</h1>

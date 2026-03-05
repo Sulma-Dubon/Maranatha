@@ -7,7 +7,7 @@ from django.core.cache import cache
 from django.utils import timezone
 from nfc.models import NFCDevice, NFCScan
 from content.models import Verse, VerseCategory, BibleVersion
-from .models import ExperienceConfig, StudyVerseAssignment
+from .models import ExperienceConfig, StudyVerseAssignment, BackgroundImage
 from .serializers import VerseSerializer
 
 
@@ -156,6 +156,7 @@ def experience_page(request, public_uid):
     context["theme"] = theme
     context["theme_class"] = f"theme-{theme}"
     context["base_path"] = f"/nfc/{public_uid}/"
+    context["background_image_url"] = _pick_background_image_url(data)
     if error:
         context["error"] = error[0]
     return render(request, "experiences/nfc_public.html", context)
@@ -174,6 +175,7 @@ def today_category_page(request, category_slug, version_abbr=None):
     context["base_path"] = f"/hoy/{category_slug}/"
     if version_abbr:
         context["base_path"] = f"/hoy/{category_slug}/{version_abbr}/"
+    context["background_image_url"] = _pick_background_image_url(data)
     if error:
         context["error"] = error[0]
     return render(request, "experiences/nfc_public.html", context)
@@ -342,5 +344,34 @@ def _get_experience_payload(public_uid, study_only=False):
         "public_uid": nfc_device.public_uid,
         "experience_type": nfc_device.experience_type,
         "verse_data": verse_data,
+        "category_slug": config.category.slug if config and config.category else None,
+        "version": version_abbr,
     }
     return data, None
+
+
+def _pick_background_image_url(data):
+    if not data:
+        return None
+
+    category_slug = data.get("category_slug")
+    version_abbr = data.get("version")
+
+    category = VerseCategory.objects.filter(slug=category_slug).first() if category_slug else None
+    version = BibleVersion.objects.filter(abbreviation=version_abbr).first() if version_abbr else None
+
+    # Priority: exact scope -> category only -> version only -> global
+    candidates = None
+    if category and version:
+        candidates = BackgroundImage.objects.filter(is_active=True, category=category, version=version)
+    if not candidates or not candidates.exists():
+        if category:
+            candidates = BackgroundImage.objects.filter(is_active=True, category=category, version__isnull=True)
+    if not candidates or not candidates.exists():
+        if version:
+            candidates = BackgroundImage.objects.filter(is_active=True, category__isnull=True, version=version)
+    if not candidates or not candidates.exists():
+        candidates = BackgroundImage.objects.filter(is_active=True, category__isnull=True, version__isnull=True)
+
+    image = candidates.order_by("?").first() if candidates else None
+    return image.image.url if image and image.image else None

@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import ExperienceConfig, StudyVerseAssignment
+from .models import ExperienceConfig, StudyVerseAssignment, BackgroundImage
 
 
 @admin.register(ExperienceConfig)
@@ -14,3 +14,9 @@ class StudyVerseAssignmentAdmin(admin.ModelAdmin):
     list_display = ['config', 'verse', 'updated_at']
     list_filter = ['config']
     search_fields = ['config__nfc_device__public_uid']
+
+
+@admin.register(BackgroundImage)
+class BackgroundImageAdmin(admin.ModelAdmin):
+    list_display = ['id', 'category', 'version', 'is_active', 'created_at']
+    list_filter = ['is_active', 'category', 'version']

@@ -27,3 +27,23 @@ class StudyVerseAssignment(models.Model):
 
     def __str__(self):
         return f"{self.config.nfc_device.public_uid} -> {self.verse}"
+
+
+class BackgroundImage(models.Model):
+    image = models.ImageField(upload_to="backgrounds/")
+    category = models.ForeignKey(VerseCategory, null=True, blank=True, on_delete=models.SET_NULL)
+    version = models.ForeignKey(BibleVersion, null=True, blank=True, on_delete=models.SET_NULL)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at", "-id"]
+
+    def __str__(self):
+        scope = []
+        if self.category:
+            scope.append(self.category.slug)
+        if self.version:
+            scope.append(self.version.abbreviation)
+        suffix = f" ({', '.join(scope)})" if scope else " (global)"
+        return f"Background {self.id}{suffix}"

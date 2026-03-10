@@ -157,6 +157,7 @@ def experience_page(request, public_uid):
     context["theme_class"] = f"theme-{theme}"
     context["base_path"] = f"/nfc/{public_uid}/"
     context["background_image_url"] = _pick_background_image_url(data)
+    context.update(_build_share_meta(request, data, context["background_image_url"], error=error))
     if error:
         context["error"] = error[0]
     return render(request, "experiences/nfc_public.html", context)
@@ -176,6 +177,7 @@ def today_category_page(request, category_slug, version_abbr=None):
     if version_abbr:
         context["base_path"] = f"/hoy/{category_slug}/{version_abbr}/"
     context["background_image_url"] = _pick_background_image_url(data)
+    context.update(_build_share_meta(request, data, context["background_image_url"], error=error))
     if error:
         context["error"] = error[0]
     return render(request, "experiences/nfc_public.html", context)
@@ -375,3 +377,34 @@ def _pick_background_image_url(data):
 
     image = candidates.order_by("?").first() if candidates else None
     return image.image.url if image and image.image else None
+
+
+def _build_share_meta(request, data, background_image_url, error=None):
+    if error:
+        title = "Maranata"
+        description = "Contenido no disponible por el momento."
+    else:
+        verse_data = data.get("verse_data") if data else None
+        if verse_data:
+            reference = (
+                f"{verse_data.get('book')} "
+                f"{verse_data.get('chapter')}:{verse_data.get('verse_start')}"
+            )
+            title = f"Maranata - {reference}"
+            raw_text = (verse_data.get("text") or "").strip().replace("\n", " ")
+            description = raw_text[:190] + ("..." if len(raw_text) > 190 else "")
+        else:
+            title = "Maranata"
+            description = "Versiculo diario para compartir."
+
+    page_url = request.build_absolute_uri()
+    image_url = request.build_absolute_uri(background_image_url) if background_image_url else ""
+    twitter_card = "summary_large_image" if image_url else "summary"
+
+    return {
+        "share_title": title,
+        "share_description": description,
+        "share_url": page_url,
+        "share_image_url": image_url,
+        "twitter_card": twitter_card,
+    }

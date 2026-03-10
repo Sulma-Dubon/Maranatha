@@ -4,7 +4,25 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Versiculo Diario</title>
+    <title>{{ share_title|default:"Maranata" }}</title>
+    <meta name="description" content="{{ share_description|default:'Versiculo diario para compartir.' }}" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Maranata" />
+    <meta property="og:title" content="{{ share_title|default:'Maranata' }}" />
+    <meta property="og:description" content="{{ share_description|default:'Versiculo diario para compartir.' }}" />
+    <meta property="og:url" content="{{ share_url|default:'' }}" />
+    {% if share_image_url %}
+      <meta property="og:image" content="{{ share_image_url }}" />
+    {% endif %}
+
+    <meta name="twitter:card" content="{{ twitter_card|default:'summary' }}" />
+    <meta name="twitter:title" content="{{ share_title|default:'Maranata' }}" />
+    <meta name="twitter:description" content="{{ share_description|default:'Versiculo diario para compartir.' }}" />
+    {% if share_image_url %}
+      <meta name="twitter:image" content="{{ share_image_url }}" />
+    {% endif %}
+
     <link rel="stylesheet" href="{% static 'experiences/nfc_public.css' %}" />
   </head>
   <body class="public-page {{ theme_class }}"{% if background_image_url %} style="--theme-a-bg: url('{{ background_image_url }}'); --theme-b-bg: url('{{ background_image_url }}');"{% endif %}>

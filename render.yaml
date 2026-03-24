@@ -7,6 +7,7 @@ services:
       pip install -r requirements.txt
       python manage.py collectstatic --noinput
       python manage.py migrate
+      python manage.py ensure_admin
       python manage.py import_verses --path verses.csv --assign-general
     startCommand: gunicorn config.wsgi:application
     envVars:

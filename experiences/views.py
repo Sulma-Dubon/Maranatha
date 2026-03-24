@@ -5,6 +5,7 @@ from django.conf import settings
 from django.shortcuts import render, redirect
 from django.core.cache import cache
 from django.utils import timezone
+from urllib.parse import quote
 from nfc.models import NFCDevice, NFCScan
 from content.models import Verse, VerseCategory, BibleVersion
 from .models import ExperienceConfig, StudyVerseAssignment, BackgroundImage
@@ -383,6 +384,7 @@ def _build_share_meta(request, data, background_image_url, error=None):
     if error:
         title = "Maranata"
         description = "Contenido no disponible por el momento."
+        share_text = "Descubre Maranata"
     else:
         verse_data = data.get("verse_data") if data else None
         if verse_data:
@@ -393,18 +395,30 @@ def _build_share_meta(request, data, background_image_url, error=None):
             title = f"Maranata - {reference}"
             raw_text = (verse_data.get("text") or "").strip().replace("\n", " ")
             description = raw_text[:190] + ("..." if len(raw_text) > 190 else "")
+            share_text = f'"{description}" {reference}'
         else:
             title = "Maranata"
             description = "Versiculo diario para compartir."
+            share_text = "Versiculo diario para compartir."
 
     page_url = request.build_absolute_uri()
     image_url = request.build_absolute_uri(background_image_url) if background_image_url else ""
     twitter_card = "summary_large_image" if image_url else "summary"
+    whatsapp_text = f"{share_text} {page_url}".strip()
+    encoded_page_url = quote(page_url, safe="")
+    encoded_share_text = quote(share_text, safe="")
+    encoded_whatsapp_text = quote(whatsapp_text, safe="")
 
     return {
         "share_title": title,
         "share_description": description,
+        "share_text": share_text,
         "share_url": page_url,
         "share_image_url": image_url,
         "twitter_card": twitter_card,
+        "share_links": {
+            "whatsapp": f"https://wa.me/?text={encoded_whatsapp_text}",
+            "facebook": f"https://www.facebook.com/sharer/sharer.php?u={encoded_page_url}",
+            "x": f"https://twitter.com/intent/tweet?text={encoded_share_text}&url={encoded_page_url}",
+        },
     }

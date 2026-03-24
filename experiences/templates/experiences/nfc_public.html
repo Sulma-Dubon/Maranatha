@@ -60,7 +60,10 @@
 
       <section class="actions">
         <button class="btn" id="shareBtn">Compartir</button>
-        <button class="btn ghost" id="copyBtn">Copiar link</button>
+        <button class="btn ghost" id="copyBtn">Copiar mensaje</button>
+        <a class="btn ghost" href="{{ share_links.whatsapp }}" target="_blank" rel="noopener noreferrer">WhatsApp</a>
+        <a class="btn ghost" href="{{ share_links.facebook }}" target="_blank" rel="noopener noreferrer">Facebook</a>
+        <a class="btn ghost" href="{{ share_links.x }}" target="_blank" rel="noopener noreferrer">X</a>
         <a class="btn ghost" href="{{ base_path }}?theme=a">Tema A</a>
         <a class="btn ghost" href="{{ base_path }}?theme=b">Tema B</a>
         {% if data.experience_type == "STUDY" %}
@@ -74,28 +77,36 @@
         var shareBtn = document.getElementById("shareBtn");
         var copyBtn = document.getElementById("copyBtn");
         var link = window.location.href;
+        var shareTitle = "{{ share_title|escapejs }}";
+        var shareText = "{{ share_text|escapejs }}";
+        var copiedMessageText = "Copiado";
+        var defaultCopyText = "Copiar mensaje";
 
         shareBtn.addEventListener("click", async function () {
           if (navigator.share) {
             try {
-              await navigator.share({ title: "Versiculo Diario", url: link });
+              await navigator.share({ title: shareTitle, text: shareText, url: link });
             } catch (err) {}
           } else {
-            copyToClipboard(link);
+            copyToClipboard(buildMessage());
           }
         });
 
         copyBtn.addEventListener("click", function () {
-          copyToClipboard(link);
+          copyToClipboard(buildMessage());
         });
 
         function copyToClipboard(text) {
           navigator.clipboard.writeText(text).then(function () {
-            copyBtn.textContent = "Copiado";
+            copyBtn.textContent = copiedMessageText;
             setTimeout(function () {
-              copyBtn.textContent = "Copiar link";
+              copyBtn.textContent = defaultCopyText;
             }, 1200);
           });
+        }
+
+        function buildMessage() {
+          return (shareText ? shareText + "\n\n" : "") + link;
         }
       })();
     </script>

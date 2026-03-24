@@ -14,6 +14,7 @@ SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-px#xghu7@-jt7oh*zz4ja5ekb2
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DJANGO_DEBUG', 'True').lower() == 'true'
+SERVE_MEDIA = os.getenv('SERVE_MEDIA', str(DEBUG)).lower() == 'true'
 
 allowed_hosts_env = os.getenv('ALLOWED_HOSTS', '')
 ALLOWED_HOSTS = [h.strip() for h in allowed_hosts_env.split(',') if h.strip()] or ['127.0.0.1', 'localhost']

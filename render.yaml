@@ -10,7 +10,11 @@ services:
       python manage.py import_verses --path verses.csv --assign-general
     startCommand: gunicorn config.wsgi:application
     envVars:
+      - key: SECRET_KEY
+        generateValue: true
       - key: DJANGO_DEBUG
         value: "False"
+      - key: SERVE_MEDIA
+        value: "True"
       - key: ALLOWED_HOSTS
         value: ".onrender.com"

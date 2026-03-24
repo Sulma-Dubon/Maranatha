@@ -16,6 +16,7 @@ __pycache__/
 *.pyd
 .env
 media/
+staticfiles/
 
 # Sistema
 .DS_Store

@@ -164,6 +164,53 @@ def experience_page(request, public_uid):
     return render(request, "experiences/nfc_public.html", context)
 
 
+def home_page(request):
+    """Render the public daily verse at the site's root URL."""
+    version = BibleVersion.objects.filter(
+        abbreviation="RVR1909", is_active=True
+    ).first()
+    if not version:
+        version = BibleVersion.objects.filter(is_active=True).order_by("abbreviation").first()
+
+    if not version:
+        data, error = None, ("No hay versiones biblicas disponibles", status.HTTP_404_NOT_FOUND)
+    else:
+        verses = Verse.objects.filter(version=version).select_related("book").order_by("id")
+        count = verses.count()
+        if not count:
+            data, error = None, ("No hay versiculos disponibles para esta version", status.HTTP_404_NOT_FOUND)
+        else:
+            verse = verses[timezone.localdate().toordinal() % count]
+            data = {
+                "public_uid": None,
+                "experience_type": "DAILY_PUBLIC",
+                "verse_data": {
+                    "book": verse.book.name,
+                    "chapter": verse.chapter,
+                    "verse_start": verse.verse_start,
+                    "verse_end": verse.verse_end,
+                    "text": verse.text,
+                },
+                "category_slug": None,
+                "version": version.abbreviation,
+            }
+            error = None
+
+    theme = (request.GET.get("theme") or "a").lower()
+    if theme not in {"a", "b"}:
+        theme = "a"
+    context = {
+        "data": data,
+        "error": error[0] if error else None,
+        "theme": theme,
+        "theme_class": f"theme-{theme}",
+        "base_path": "/",
+    }
+    context["background_image_url"] = _pick_background_image_url(data)
+    context.update(_build_share_meta(request, data, context["background_image_url"], error=error))
+    return render(request, "experiences/nfc_public.html", context)
+
+
 def today_category_page(request, category_slug, version_abbr=None):
     if not version_abbr:
         version_abbr = request.GET.get("version")

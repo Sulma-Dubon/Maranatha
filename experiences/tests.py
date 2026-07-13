@@ -28,6 +28,13 @@ class CategoryTodayFlowTests(TestCase):
         self.assertEqual(response.json()["experience_type"], "CATEGORY_PUBLIC")
         self.assertEqual(response.json()["verse_data"]["category"], self.category.name)
 
+    def test_home_page_returns_daily_verse(self):
+        response = self.client.get("/")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Versiculo del dia")
+        self.assertContains(response, "Texto")
+
 
 class NfcStudyOnlyTests(TestCase):
     def setUp(self):

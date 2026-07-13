@@ -1,0 +1,73 @@
+:root {
+  color-scheme: light dark;
+  --primary: #5f4036;
+  --primary-soft: #e8dccf;
+  --secondary: #c8a592;
+  --secondary-soft: #f6ede7;
+  --accent-gold: #bea176;
+  --accent-sage: #b1ae8b;
+  --surface: rgba(246, 237, 231, 0.94);
+  --ink: var(--primary);
+  --muted: #94766a;
+  --accent: var(--accent-gold);
+  --accent-deep: var(--primary);
+  --border: rgba(95, 64, 54, 0.1);
+  --shadow: 0 18px 44px rgba(95, 64, 54, 0.12);
+  --background: linear-gradient(155deg, #f8f0e9 0%, var(--primary-soft) 50%, #e9e5d0 100%);
+}
+
+* { box-sizing: border-box; }
+
+body.nfc-experience {
+  min-width: 320px;
+  min-height: 100dvh;
+  margin: 0;
+  color: var(--ink);
+  font-family: "Lora", Georgia, serif;
+  background: var(--background);
+}
+
+.experience-shell {
+  min-height: 100dvh;
+  padding: max(24px, env(safe-area-inset-top)) 20px max(24px, env(safe-area-inset-bottom));
+}
+
+.verse-card {
+  width: min(100%, 480px);
+  padding: 24px;
+  border: 1px solid var(--border);
+  border-radius: 22px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(18px);
+  animation: card-enter 620ms cubic-bezier(.2, .8, .2, 1) both;
+}
+
+.brand-bar { display: flex; align-items: center; justify-content: space-between; margin: -24px -24px clamp(44px, 9vh, 82px); padding: 16px 20px; border-bottom: 1px solid rgba(95, 64, 54, .1); background: rgba(232, 220, 207, .72); border-radius: 22px 22px 0 0; }
+.brand { display: inline-flex; align-items: center; min-height: 34px; padding: 6px 11px; border-radius: 5px; color: var(--primary-soft); background: var(--primary); font-size: .88rem; font-weight: 700; letter-spacing: .12em; line-height: 1; text-decoration: none; }
+.daily-label, .eyebrow { color: var(--muted); font-size: .78rem; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; }
+.daily-label { padding: 7px 10px; border-radius: 999px; background: rgba(190, 161, 118, .14); }
+.eyebrow { margin-bottom: 12px; }
+.verse-title { margin: 0 0 26px; font-size: 47px; font-weight: 500; letter-spacing: -.045em; }
+.verse-intro { margin-bottom: 14px; color: var(--muted); font-size: .78rem; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; }
+.verse-text { margin: 0; font-size: 29px; line-height: 1.42; letter-spacing: -.025em; }
+.verse-reference { margin: 24px 0 0; color: var(--accent-deep); font-size: 23px; font-weight: 700; }
+.verse-blessing { margin: 28px 0 36px; color: var(--muted); font-size: .95rem; }
+.verse-actions { margin-top: 36px; }
+.action-button { min-height: 52px; border-radius: 15px; font-size: 1rem; font-weight: 700; transition: transform 180ms ease, box-shadow 180ms ease; }
+.action-button:active { transform: scale(.98); }
+.btn-primary { --bs-btn-bg: var(--primary); --bs-btn-border-color: var(--primary); --bs-btn-hover-bg: #493027; --bs-btn-hover-border-color: #493027; --bs-btn-active-bg: #493027; --bs-btn-active-border-color: #493027; box-shadow: 0 10px 22px rgba(95, 64, 54, .24); }
+.btn-outline-secondary { --bs-btn-color: var(--primary); --bs-btn-border-color: var(--secondary); --bs-btn-hover-bg: rgba(200, 165, 146, .18); --bs-btn-hover-border-color: var(--secondary); --bs-btn-hover-color: var(--primary); }
+.copy-feedback { min-height: 1.25rem; margin: 16px 0 0; color: var(--accent-deep); font-size: .86rem; font-weight: 600; text-align: center; }
+
+@keyframes card-enter { from { opacity: 0; transform: translateY(18px) scale(.985); } to { opacity: 1; transform: translateY(0) scale(1); } }
+
+@media (prefers-color-scheme: dark) {
+  :root { --surface: rgba(246, 237, 231, .96); --ink: #5f4036; --muted: #94766a; --accent: #bea176; --accent-deep: #5f4036; --border: rgba(95, 64, 54, .1); --shadow: 0 18px 44px rgba(95, 64, 54, .14); --background: linear-gradient(155deg, #f8f0e9 0%, #e8dccf 50%, #ddd9c3 100%); }
+  .brand { color: var(--primary); }
+  .daily-label { background: rgba(190, 161, 118, .14); }
+  .btn-primary { --bs-btn-color: #f6ede7; }
+}
+
+@media (min-width: 640px) { .verse-card { padding: 34px; } .brand-bar { margin: -34px -34px clamp(44px, 9vh, 82px); padding: 18px 26px; border-radius: 22px 22px 0 0; } }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; } }

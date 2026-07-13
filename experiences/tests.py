@@ -32,7 +32,7 @@ class CategoryTodayFlowTests(TestCase):
         response = self.client.get("/")
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Versiculo del dia")
+        self.assertContains(response, "Que hoy recuerdes:")
         self.assertContains(response, "Texto")
 
 
@@ -40,6 +40,15 @@ class NfcStudyOnlyTests(TestCase):
     def setUp(self):
         version = BibleVersion.objects.create(name="Reina Valera 1909", abbreviation="RVR1909")
         category = VerseCategory.objects.create(name="General", slug="general")
+        book = Book.objects.create(name="Juan", testament="NT")
+        Verse.objects.create(
+            book=book,
+            chapter=3,
+            verse_start=16,
+            verse_end=16,
+            text="Porque de tal manera amo Dios al mundo.",
+            version=version,
+        )
         self.nfc_category = NFCDevice.objects.create(public_uid="NFC-CATEGORY", experience_type="CATEGORY")
         self.nfc_study = NFCDevice.objects.create(public_uid="NFC-STUDY", experience_type="STUDY")
         ExperienceConfig.objects.create(nfc_device=self.nfc_category, category=category, version=version)
@@ -52,3 +61,10 @@ class NfcStudyOnlyTests(TestCase):
     def test_nfc_endpoint_allows_study(self):
         response = self.client.get(f"/api/nfc/{self.nfc_study.public_uid}/")
         self.assertEqual(response.status_code, 200)
+
+    def test_public_nfc_page_always_shows_the_daily_verse(self):
+        response = self.client.get(f"/nfc/{self.nfc_category.public_uid}/")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Que hoy recuerdes:")
+        self.assertContains(response, "Porque de tal manera amo Dios al mundo.")

@@ -22,7 +22,7 @@ class ExperienceView(APIView):
     """
 
     def get(self, request, public_uid):
-        data, error = _get_experience_payload(public_uid, study_only=True)
+        data, error = _get_daily_experience_payload(public_uid)
         if error:
             return Response({"detail": error[0]}, status=error[1])
         return Response(data, status=status.HTTP_200_OK)
@@ -149,85 +149,37 @@ class StudyVerseAddView(APIView):
 
 
 def experience_page(request, public_uid):
-    data, error = _get_experience_payload(public_uid, study_only=True)
-    theme = (request.GET.get("theme") or "a").lower()
-    if theme not in {"a", "b"}:
-        theme = "a"
-    context = {"data": data, "error": None}
-    context["theme"] = theme
-    context["theme_class"] = f"theme-{theme}"
-    context["base_path"] = f"/nfc/{public_uid}/"
-    context["background_image_url"] = _pick_background_image_url(data)
-    context.update(_build_share_meta(request, data, context["background_image_url"], error=error))
-    if error:
-        context["error"] = error[0]
-    return render(request, "experiences/nfc_public.html", context)
+    data, error = _get_daily_experience_payload(public_uid)
+    return _render_public_experience(request, data, error)
 
 
 def home_page(request):
     """Render the public daily verse at the site's root URL."""
-    version = BibleVersion.objects.filter(
-        abbreviation="RVR1909", is_active=True
-    ).first()
-    if not version:
-        version = BibleVersion.objects.filter(is_active=True).order_by("abbreviation").first()
-
-    if not version:
-        data, error = None, ("No hay versiones biblicas disponibles", status.HTTP_404_NOT_FOUND)
-    else:
-        verses = Verse.objects.filter(version=version).select_related("book").order_by("id")
-        count = verses.count()
-        if not count:
-            data, error = None, ("No hay versiculos disponibles para esta version", status.HTTP_404_NOT_FOUND)
-        else:
-            verse = verses[timezone.localdate().toordinal() % count]
-            data = {
-                "public_uid": None,
-                "experience_type": "DAILY_PUBLIC",
-                "verse_data": {
-                    "book": verse.book.name,
-                    "chapter": verse.chapter,
-                    "verse_start": verse.verse_start,
-                    "verse_end": verse.verse_end,
-                    "text": verse.text,
-                },
-                "category_slug": None,
-                "version": version.abbreviation,
-            }
-            error = None
-
-    theme = (request.GET.get("theme") or "a").lower()
-    if theme not in {"a", "b"}:
-        theme = "a"
-    context = {
-        "data": data,
-        "error": error[0] if error else None,
-        "theme": theme,
-        "theme_class": f"theme-{theme}",
-        "base_path": "/",
-    }
-    context["background_image_url"] = _pick_background_image_url(data)
-    context.update(_build_share_meta(request, data, context["background_image_url"], error=error))
-    return render(request, "experiences/nfc_public.html", context)
+    data, error = _get_daily_experience_payload()
+    return _render_public_experience(request, data, error)
 
 
 def today_category_page(request, category_slug, version_abbr=None):
     if not version_abbr:
         version_abbr = request.GET.get("version")
     data, error = _get_today_category_payload(category_slug, version_abbr=version_abbr)
-    theme = (request.GET.get("theme") or "a").lower()
-    if theme not in {"a", "b"}:
-        theme = "a"
     context = {"data": data, "error": None}
-    context["theme"] = theme
-    context["theme_class"] = f"theme-{theme}"
-    context["base_path"] = f"/hoy/{category_slug}/"
-    if version_abbr:
-        context["base_path"] = f"/hoy/{category_slug}/{version_abbr}/"
     context["background_image_url"] = _pick_background_image_url(data)
     context.update(_build_share_meta(request, data, context["background_image_url"], error=error))
     if error:
         context["error"] = error[0]
+    return render(request, "experiences/nfc_public.html", context)
+
+
+def _render_public_experience(request, data, error):
+    """Build the common context for the mobile public experience."""
+    background_image_url = _pick_background_image_url(data)
+    context = {
+        "data": data,
+        "error": error[0] if error else None,
+        "background_image_url": background_image_url,
+    }
+    context.update(_build_share_meta(request, data, background_image_url, error=error))
     return render(request, "experiences/nfc_public.html", context)
 
 
@@ -346,6 +298,44 @@ def _get_today_category_payload(category_slug, version_abbr=None):
     return data, None
 
 
+def _get_daily_experience_payload(public_uid=None):
+    """Return the single deterministic daily verse used by every public NFC page."""
+    nfc_device = None
+    if public_uid:
+        try:
+            nfc_device = NFCDevice.objects.get(public_uid=public_uid, is_active=True)
+        except NFCDevice.DoesNotExist:
+            return None, ("NFC no encontrado", status.HTTP_404_NOT_FOUND)
+
+    version = BibleVersion.objects.filter(abbreviation="RVR1909", is_active=True).first()
+    if not version:
+        version = BibleVersion.objects.filter(is_active=True).order_by("abbreviation").first()
+    if not version:
+        return None, ("No hay versiones biblicas disponibles", status.HTTP_404_NOT_FOUND)
+
+    verses = Verse.objects.filter(version=version).select_related("book").order_by("id")
+    count = verses.count()
+    if not count:
+        return None, ("No hay versiculos disponibles para esta version", status.HTTP_404_NOT_FOUND)
+
+    verse = verses[timezone.localdate().toordinal() % count]
+    if nfc_device and settings.ENABLE_NFC_SCAN_LOGS:
+        NFCScan.objects.create(nfc_device=nfc_device)
+    return {
+        "public_uid": public_uid,
+        "experience_type": "DAILY_PUBLIC",
+        "verse_data": nfc_device._build_verse_data(verse) if nfc_device else {
+            "book": verse.book.name,
+            "chapter": verse.chapter,
+            "verse_start": verse.verse_start,
+            "verse_end": verse.verse_end,
+            "text": verse.text,
+        },
+        "category_slug": None,
+        "version": version.abbreviation,
+    }, None
+
+
 def _get_experience_payload(public_uid, study_only=False):
     try:
         nfc_device = NFCDevice.objects.get(public_uid=public_uid, is_active=True)
@@ -429,9 +419,9 @@ def _pick_background_image_url(data):
 
 def _build_share_meta(request, data, background_image_url, error=None):
     if error:
-        title = "Maranata"
+        title = "Blesslet"
         description = "Contenido no disponible por el momento."
-        share_text = "Descubre Maranata"
+        share_text = "Descubre Blesslet"
     else:
         verse_data = data.get("verse_data") if data else None
         if verse_data:
@@ -439,12 +429,12 @@ def _build_share_meta(request, data, background_image_url, error=None):
                 f"{verse_data.get('book')} "
                 f"{verse_data.get('chapter')}:{verse_data.get('verse_start')}"
             )
-            title = f"Maranata - {reference}"
+            title = f"Blesslet - {reference}"
             raw_text = (verse_data.get("text") or "").strip().replace("\n", " ")
             description = raw_text[:190] + ("..." if len(raw_text) > 190 else "")
             share_text = f'"{description}" {reference}'
         else:
-            title = "Maranata"
+            title = "Blesslet"
             description = "Versiculo diario para compartir."
             share_text = "Versiculo diario para compartir."
 

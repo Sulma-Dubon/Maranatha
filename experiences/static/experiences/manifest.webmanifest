@@ -1,0 +1,9 @@
+{
+  "name": "Blesslet",
+  "short_name": "Blesslet",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#E8DCCF",
+  "theme_color": "#5F4036",
+  "icons": [{ "src": "/static/experiences/icons/blesslet-icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }]
+}

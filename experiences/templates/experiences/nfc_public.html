@@ -4,12 +4,12 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>{{ share_title|default:"Maranata" }}</title>
+    <title>{{ share_title|default:"Blesslet" }}</title>
     <meta name="description" content="{{ share_description|default:'Versiculo diario para compartir.' }}" />
 
     <meta property="og:type" content="website" />
-    <meta property="og:site_name" content="Maranata" />
-    <meta property="og:title" content="{{ share_title|default:'Maranata' }}" />
+    <meta property="og:site_name" content="Blesslet" />
+    <meta property="og:title" content="{{ share_title|default:'Blesslet' }}" />
     <meta property="og:description" content="{{ share_description|default:'Versiculo diario para compartir.' }}" />
     <meta property="og:url" content="{{ share_url|default:'' }}" />
     {% if share_image_url %}
@@ -17,98 +17,51 @@
     {% endif %}
 
     <meta name="twitter:card" content="{{ twitter_card|default:'summary' }}" />
-    <meta name="twitter:title" content="{{ share_title|default:'Maranata' }}" />
+    <meta name="twitter:title" content="{{ share_title|default:'Blesslet' }}" />
     <meta name="twitter:description" content="{{ share_description|default:'Versiculo diario para compartir.' }}" />
     {% if share_image_url %}
       <meta name="twitter:image" content="{{ share_image_url }}" />
     {% endif %}
 
-    <link rel="stylesheet" href="{% static 'experiences/nfc_public.css' %}" />
+    <meta name="theme-color" content="#E8DCCF" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#E8DCCF" media="(prefers-color-scheme: dark)" />
+    <link rel="icon" href="{% static 'experiences/icons/blesslet-icon.svg' %}" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="{% static 'experiences/icons/blesslet-icon.svg' %}" />
+    <link rel="manifest" href="{% static 'experiences/manifest.webmanifest' %}" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="{% static 'experiences/css/nfc_experience.css' %}" />
   </head>
-  <body class="public-page {{ theme_class }}"{% if background_image_url %} style="--theme-a-bg: url('{{ background_image_url }}'); --theme-b-bg: url('{{ background_image_url }}');"{% endif %}>
-    <div class="bg"></div>
-    <main class="page">
-      <section class="hero-stage">
-        <div class="hero-image">
-          <div class="hero-content">
-            <section class="verse-hero">
-              {% if error %}
-                <h1 class="title">No disponible</h1>
-                <p class="verse">{{ error }}</p>
-              {% elif data.verse_data %}
-                <h1 class="title">Versiculo del dia</h1>
-                <div class="verse-copy">
-                  <p class="verse">&ldquo;{{ data.verse_data.text }}&rdquo;</p>
-                  <div class="meta">
-                    <span class="ref">
-                      {{ data.verse_data.book }}
-                      {{ data.verse_data.chapter }}:{{ data.verse_data.verse_start }}{% if data.verse_data.verse_end and data.verse_data.verse_end != data.verse_data.verse_start %}-{{ data.verse_data.verse_end }}{% endif %}
-                    </span>
-                    {% if data.verse_data.category %}
-                      <span class="tag">{{ data.verse_data.category }}</span>
-                    {% endif %}
-                  </div>
-                </div>
-              {% else %}
-                <h1 class="title">Aun sin versiculo</h1>
-                <p class="verse">Este dispositivo no tiene un versiculo asignado.</p>
-              {% endif %}
-            </section>
-          </div>
-        </div>
-      </section>
-
-      <section class="actions">
-        <button class="btn" id="shareBtn">Compartir</button>
-        <button class="btn ghost" id="copyBtn">Copiar mensaje</button>
-        <a class="btn ghost" href="{{ share_links.whatsapp }}" target="_blank" rel="noopener noreferrer">WhatsApp</a>
-        <a class="btn ghost" href="{{ share_links.facebook }}" target="_blank" rel="noopener noreferrer">Facebook</a>
-        <a class="btn ghost" href="{{ share_links.x }}" target="_blank" rel="noopener noreferrer">X</a>
-        <a class="btn ghost" href="{{ base_path }}?theme=a">Tema A</a>
-        <a class="btn ghost" href="{{ base_path }}?theme=b">Tema B</a>
-        {% if data.experience_type == "STUDY" %}
-          <a class="btn ghost" href="/nfc/{{ data.public_uid }}/study/">Modificar</a>
+  <body class="nfc-experience">
+    <main class="experience-shell container-fluid d-flex align-items-center justify-content-center">
+      <article class="verse-card" aria-labelledby="daily-verse-title">
+        <header class="brand-bar">
+          <a class="brand" href="/" aria-label="LARAA, inicio">LARAA</a>
+          <span class="daily-label">Hoy</span>
+        </header>
+        {% if error %}
+          <section class="verse-content text-center" role="alert">
+            <p class="eyebrow">Contenido no disponible</p>
+            <h1 id="daily-verse-title" class="verse-title">Volveremos pronto</h1>
+            <p class="verse-text">{{ error }}</p>
+          </section>
+        {% elif data.verse_data %}
+          <section class="verse-content">
+            <p class="eyebrow" data-greeting>Buenos días</p>
+            <h1 id="daily-verse-title" class="verse-title verse-intro">Que hoy recuerdes:</h1>
+            <blockquote class="verse-text">“{{ data.verse_data.text }}”</blockquote>
+            <p class="verse-reference">{{ data.verse_data.book }} {{ data.verse_data.chapter }}:{{ data.verse_data.verse_start }}{% if data.verse_data.verse_end and data.verse_data.verse_end != data.verse_data.verse_start %}-{{ data.verse_data.verse_end }}{% endif %}</p>
+            <p class="verse-blessing">Que esta Palabra acompañe tu día.</p>
+          </section>
+          <footer class="verse-actions d-grid gap-2">
+            <button class="btn btn-primary action-button" type="button" data-share data-title="{{ share_title|escapejs }}" data-text="{{ share_text|escapejs }}">❤️ Compartir</button>
+          </footer>
         {% endif %}
-      </section>
+        <p class="copy-feedback" aria-live="polite" data-feedback></p>
+      </article>
     </main>
-
-    <script>
-      (function () {
-        var shareBtn = document.getElementById("shareBtn");
-        var copyBtn = document.getElementById("copyBtn");
-        var link = window.location.href;
-        var shareTitle = "{{ share_title|escapejs }}";
-        var shareText = "{{ share_text|escapejs }}";
-        var copiedMessageText = "Copiado";
-        var defaultCopyText = "Copiar mensaje";
-
-        shareBtn.addEventListener("click", async function () {
-          if (navigator.share) {
-            try {
-              await navigator.share({ title: shareTitle, text: shareText, url: link });
-            } catch (err) {}
-          } else {
-            copyToClipboard(buildMessage());
-          }
-        });
-
-        copyBtn.addEventListener("click", function () {
-          copyToClipboard(buildMessage());
-        });
-
-        function copyToClipboard(text) {
-          navigator.clipboard.writeText(text).then(function () {
-            copyBtn.textContent = copiedMessageText;
-            setTimeout(function () {
-              copyBtn.textContent = defaultCopyText;
-            }, 1200);
-          });
-        }
-
-        function buildMessage() {
-          return (shareText ? shareText + "\n\n" : "") + link;
-        }
-      })();
-    </script>
+    <script src="{% static 'experiences/js/nfc_experience.js' %}" defer></script>
   </body>
 </html>
